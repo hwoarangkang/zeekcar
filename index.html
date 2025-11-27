@@ -287,12 +287,13 @@
         },
         watch: {
             selectedMonth() { this.updateBattlefields(); },
+            // 監聽分頁切換，如果切換到趨勢頁且已有選擇車款，就延遲畫圖
             currentView(newVal) {
-                // 只有當「已經選好車」且「切換到趨勢頁」時，才嘗試畫圖
                 if (newVal === 'trend' && this.trendSearch && this.hasSelectedCar) {
+                    // 關鍵修正：增加延遲到 300ms，確保 Vue v-if 動畫完成且 Canvas 已存在 DOM 中
                     setTimeout(() => {
                         this.renderChart(this.trendSearch);
-                    }, 100);
+                    }, 300);
                 }
             }
         },
@@ -371,34 +372,35 @@
                 ];
             },
             showTrend(modelName) {
-                this.currentView = 'trend';
+                // 1. 設定資料
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
                 this.showDropdown = false;
-                // 關鍵修正：延遲 0.1 秒等 DOM 渲染完再畫圖
-                setTimeout(() => {
-                    this.renderChart(modelName);
-                }, 100);
+                
+                // 2. 切換分頁 (這會觸發 watcher)
+                this.currentView = 'trend';
             },
             selectTrendModel(modelName) {
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
                 this.showDropdown = false;
-                // 關鍵修正：延遲 0.1 秒等 DOM 渲染完再畫圖
                 setTimeout(() => {
                     this.renderChart(modelName);
-                }, 100);
+                }, 300);
             },
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
                 if (!ctx) return;
+                
                 const modelData = this.salesData.filter(d => d.model === modelName);
                 const months = [...new Set(this.salesData.map(d => d.month))].sort();
                 const counts = months.map(m => {
                     const record = modelData.find(d => d.month === m);
                     return record ? record.count : 0;
                 });
+                
                 if (this.chartInstance) this.chartInstance.destroy();
+                
                 this.chartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
