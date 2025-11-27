@@ -24,8 +24,6 @@
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* 樣式微調 */
         #car-sales-app button { border-style: solid; cursor: pointer; }
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         #car-sales-app table { width: 100%; border-collapse: collapse; }
@@ -230,7 +228,7 @@
                 filterCategory: 'All',
                 searchQuery: '',
                 trendSearch: '',
-                showDropdown: false, // 控制下拉選單開關
+                showDropdown: false,
                 salesData: [],
                 chartInstance: null,
                 battlefields: [],
@@ -290,8 +288,11 @@
         watch: {
             selectedMonth() { this.updateBattlefields(); },
             currentView(newVal) {
+                // 只有當「已經選好車」且「切換到趨勢頁」時，才嘗試畫圖
                 if (newVal === 'trend' && this.trendSearch && this.hasSelectedCar) {
-                    this.$nextTick(() => this.renderChart(this.trendSearch));
+                    setTimeout(() => {
+                        this.renderChart(this.trendSearch);
+                    }, 100);
                 }
             }
         },
@@ -373,14 +374,20 @@
                 this.currentView = 'trend';
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
-                this.showDropdown = false; // 關閉選單
-                this.$nextTick(() => this.renderChart(modelName));
+                this.showDropdown = false;
+                // 關鍵修正：延遲 0.1 秒等 DOM 渲染完再畫圖
+                setTimeout(() => {
+                    this.renderChart(modelName);
+                }, 100);
             },
             selectTrendModel(modelName) {
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
-                this.showDropdown = false; // 關閉選單
-                this.$nextTick(() => this.renderChart(modelName));
+                this.showDropdown = false;
+                // 關鍵修正：延遲 0.1 秒等 DOM 渲染完再畫圖
+                setTimeout(() => {
+                    this.renderChart(modelName);
+                }, 100);
             },
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
