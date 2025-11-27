@@ -4,28 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🇹🇼 台灣車款銷售查詢小幫手</title>
-    
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563EB'%3E%3Cpath d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'/%3E%3C/svg%3E">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            corePlugins: { preflight: false } // WordPress 防跑版設定
-        }
-    </script>
-    
+    <script>tailwind.config = { corePlugins: { preflight: false } }</script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         #car-sales-app { font-family: 'Noto Sans TC', sans-serif; line-height: 1.5; }
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* 樣式微調 */
         #car-sales-app button { border-style: solid; cursor: pointer; }
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         #car-sales-app table { width: 100%; border-collapse: collapse; }
@@ -35,7 +25,6 @@
 <body class="bg-gray-100 text-gray-800">
 
 <div id="car-sales-app" v-cloak class="max-w-6xl mx-auto min-h-screen flex flex-col bg-gray-50">
-    
     <header class="bg-white shadow-sm sticky top-0 z-20 border-b border-gray-200">
         <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
@@ -44,168 +33,82 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold text-gray-900 leading-tight m-0">台灣車款銷售小幫手</h1>
-                    <p class="text-xs text-gray-500 m-0">資料來源：監理所領牌明細 (2025年 10月 更新)</p>
+                    <p class="text-xs text-gray-500 m-0">資料來源：監理所領牌明細</p>
                 </div>
             </div>
-            
             <div class="flex bg-gray-100 p-1 rounded-lg">
-                <button @click="currentView = 'dashboard'" :class="{'bg-white shadow text-blue-600': currentView === 'dashboard', 'text-gray-600 hover:bg-gray-200': currentView !== 'dashboard'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
-                    <i class="fas fa-trophy mr-1"></i> 戰況
-                </button>
-                <button @click="currentView = 'ranking'" :class="{'bg-white shadow text-blue-600': currentView === 'ranking', 'text-gray-600 hover:bg-gray-200': currentView !== 'ranking'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
-                    <i class="fas fa-list-ol mr-1"></i> 榜單
-                </button>
-                <button @click="currentView = 'trend'" :class="{'bg-white shadow text-blue-600': currentView === 'trend', 'text-gray-600 hover:bg-gray-200': currentView !== 'trend'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
-                    <i class="fas fa-chart-line mr-1"></i> 趨勢
-                </button>
+                <button @click="currentView = 'dashboard'" :class="{'bg-white shadow text-blue-600': currentView === 'dashboard', 'text-gray-600 hover:bg-gray-200': currentView !== 'dashboard'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0"><i class="fas fa-trophy mr-1"></i> 戰況</button>
+                <button @click="currentView = 'ranking'" :class="{'bg-white shadow text-blue-600': currentView === 'ranking', 'text-gray-600 hover:bg-gray-200': currentView !== 'ranking'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0"><i class="fas fa-list-ol mr-1"></i> 榜單</button>
+                <button @click="currentView = 'trend'" :class="{'bg-white shadow text-blue-600': currentView === 'trend', 'text-gray-600 hover:bg-gray-200': currentView !== 'trend'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0"><i class="fas fa-chart-line mr-1"></i> 趨勢</button>
             </div>
         </div>
     </header>
 
     <main class="flex-1 container mx-auto px-4 py-6">
+        <div v-if="loading" class="text-center py-20 text-gray-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>載入最新數據中...</p></div>
         
-        <div v-if="currentView === 'dashboard'" class="space-y-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 m-0 flex items-center">
-                    <i class="fas fa-crown text-yellow-500 mr-2"></i> 本月銷售戰報
-                </h2>
-                <div class="relative inline-block">
-                    <select v-model="selectedMonth" class="appearance-none bg-white border border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700 cursor-pointer">
-                        <option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="battle in battlefields" :key="battle.title" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col">
-                    <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center" :class="battle.bgLight">
-                        <div class="flex items-center gap-2">
-                            <i :class="[battle.icon, battle.textClass]"></i>
-                            <h3 class="font-bold text-gray-800 m-0">{{ battle.title }}</h3>
-                        </div>
+        <div v-else>
+            <div v-if="currentView === 'dashboard'" class="space-y-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 m-0 flex items-center"><i class="fas fa-crown text-yellow-500 mr-2"></i> 本月銷售戰報</h2>
+                    <div class="relative inline-block">
+                        <select v-model="selectedMonth" class="appearance-none bg-white border border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700 cursor-pointer">
+                            <option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
                     </div>
-
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div v-if="battle.data.length > 0" class="mb-4">
-                            <div class="flex justify-between items-end mb-1">
-                                <span class="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">CHAMPION</span>
-                                <span class="text-3xl font-black text-gray-800 leading-none">{{ battle.data[0].count.toLocaleString() }}</span>
-                            </div>
-                            <h4 class="text-xl font-bold text-blue-900 leading-tight m-0">{{ battle.data[0].model }}</h4>
-                            <p class="text-xs text-gray-400 m-0 mt-1">{{ battle.data[0].brand }}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="battle in battlefields" :key="battle.title" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col">
+                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center" :class="battle.bgLight">
+                            <div class="flex items-center gap-2"><i :class="[battle.icon, battle.textClass]"></i><h3 class="font-bold text-gray-800 m-0">{{ battle.title }}</h3></div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-300">本月無資料</div>
-
-                        <div v-if="battle.data.length > 1" class="border-t border-gray-100 pt-3 mt-2 space-y-2">
-                            <div v-for="(car, idx) in battle.data.slice(1, 3)" :key="idx" class="flex justify-between items-center text-sm">
-                                <div class="flex items-center gap-2 overflow-hidden">
-                                    <span class="rank-badge" :class="idx === 0 ? 'bg-gray-400' : 'bg-orange-700'">{{ idx + 2 }}</span>
-                                    <span class="font-medium text-gray-700 truncate">{{ car.model }}</span>
+                        <div class="p-5 flex-1 flex flex-col justify-between">
+                            <div v-if="battle.data.length > 0" class="mb-4">
+                                <div class="flex justify-between items-end mb-1"><span class="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">CHAMPION</span><span class="text-3xl font-black text-gray-800 leading-none">{{ battle.data[0].count.toLocaleString() }}</span></div>
+                                <h4 class="text-xl font-bold text-blue-900 leading-tight m-0">{{ battle.data[0].model }}</h4>
+                                <p class="text-xs text-gray-400 m-0 mt-1">{{ battle.data[0].brand }}</p>
+                            </div>
+                            <div v-else class="text-center py-8 text-gray-300">本月無資料</div>
+                            <div v-if="battle.data.length > 1" class="border-t border-gray-100 pt-3 mt-2 space-y-2">
+                                <div v-for="(car, idx) in battle.data.slice(1, 3)" :key="idx" class="flex justify-between items-center text-sm">
+                                    <div class="flex items-center gap-2 overflow-hidden"><span class="rank-badge" :class="idx === 0 ? 'bg-gray-400' : 'bg-orange-700'">{{ idx + 2 }}</span><span class="font-medium text-gray-700 truncate">{{ car.model }}</span></div><span class="font-bold text-gray-600">{{ car.count.toLocaleString() }}</span>
                                 </div>
-                                <span class="font-bold text-gray-600">{{ car.count.toLocaleString() }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="font-bold text-gray-700 m-0">🔥 全市場總排名 Top 10</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[600px]">
-                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                            <tr>
-                                <th class="px-6 py-3 text-center w-16">Rank</th>
-                                <th class="px-6 py-3 text-left">Model</th>
-                                <th class="px-6 py-3 text-center">Type</th>
-                                <th class="px-6 py-3 text-right">Units</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="(car, idx) in top10List" :key="idx" class="hover:bg-blue-50 transition">
-                                <td class="px-6 py-4 text-center">
-                                    <span class="rank-badge" :class="idx < 3 ? ['bg-yellow-400', 'bg-gray-400', 'bg-orange-700'][idx] : 'bg-gray-200 text-gray-500'">{{ idx + 1 }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-gray-800">{{ car.model }}</div>
-                                    <div class="text-xs text-gray-400">{{ car.brand }} <span v-if="car.source" class="ml-1 px-1 rounded bg-gray-100 text-gray-500">{{ car.source === 'Domestic' ? '國產' : '進口' }}</span></div>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 rounded text-xs font-bold inline-block" :class="getCategoryBadge(car.category)">{{ car.category }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-right font-bold text-blue-600 text-lg">{{ car.count.toLocaleString() }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200"><h3 class="font-bold text-gray-700 m-0">🔥 全市場總排名 Top 10</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 text-xs text-gray-500 uppercase"><tr><th class="px-6 py-3 text-center w-16">Rank</th><th class="px-6 py-3 text-left">Model</th><th class="px-6 py-3 text-center">Type</th><th class="px-6 py-3 text-right">Units</th></tr></thead><tbody class="divide-y divide-gray-100"><tr v-for="(car, idx) in top10List" :key="idx" class="hover:bg-blue-50 transition"><td class="px-6 py-4 text-center"><span class="rank-badge" :class="idx < 3 ? ['bg-yellow-400', 'bg-gray-400', 'bg-orange-700'][idx] : 'bg-gray-200 text-gray-500'">{{ idx + 1 }}</span></td><td class="px-6 py-4"><div class="font-bold text-gray-800">{{ car.model }}</div><div class="text-xs text-gray-400">{{ car.brand }} <span v-if="car.source" class="ml-1 px-1 rounded bg-gray-100 text-gray-500">{{ car.source === 'Domestic' ? '國產' : '進口' }}</span></div></td><td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold inline-block" :class="getCategoryBadge(car.category)">{{ car.category }}</span></td><td class="px-6 py-4 text-right font-bold text-blue-600 text-lg">{{ car.count.toLocaleString() }}</td></tr></tbody></table></div>
                 </div>
             </div>
-        </div>
 
-        <div v-if="currentView === 'ranking'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row gap-4 justify-between">
-                <div class="flex gap-2">
-                    <select v-model="selectedMonth" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5">
-                        <option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option>
-                    </select>
-                    <select v-model="filterCategory" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5">
-                        <option value="All">所有車種</option>
-                        <option value="SUV">SUV 休旅</option>
-                        <option value="Sedan">Sedan 房車</option>
-                        <option value="Hatchback">Hatch 掀背</option>
-                        <option value="MPV">MPV 廂式</option>
-                        <option value="EV">EV 電動車</option>
-                    </select>
+            <div v-if="currentView === 'ranking'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
+                <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row gap-4 justify-between">
+                    <div class="flex gap-2">
+                        <select v-model="selectedMonth" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5"><option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option></select>
+                        <select v-model="filterCategory" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5"><option value="All">所有車種</option><option value="SUV">SUV 休旅</option><option value="Sedan">Sedan 房車</option><option value="Hatchback">Hatch 掀背</option><option value="MPV">MPV 廂式</option><option value="EV">EV 電動車</option></select>
+                    </div>
+                    <div class="relative w-full md:w-64"><input v-model="searchQuery" type="text" placeholder="搜尋車款..." class="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg text-sm"></div>
                 </div>
-                <div class="relative w-full md:w-64">
-                    <input v-model="searchQuery" type="text" placeholder="搜尋車款..." class="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg text-sm">
-                </div>
+                <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500 min-w-[600px]"><thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th class="px-6 py-3 text-center">Rank</th><th class="px-6 py-3">Model</th><th class="px-6 py-3 text-center">Category</th><th class="px-6 py-3 text-right">Units</th><th class="px-6 py-3 text-center">Action</th></tr></thead><tbody><tr v-for="(car, idx) in filteredRanking" :key="idx" class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4 text-center font-bold">{{ idx + 1 }}</td><td class="px-6 py-4"><div class="font-bold text-gray-900 text-base">{{ car.model }}</div><div class="text-xs text-gray-500">{{ car.brand }}</div></td><td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold" :class="getCategoryBadge(car.category)">{{ car.category }}</span></td><td class="px-6 py-4 text-right font-bold text-gray-800 text-base">{{ car.count.toLocaleString() }}</td><td class="px-6 py-4 text-center"><button @click="showTrend(car.model)" class="text-blue-600 hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded text-xs">趨勢</button></td></tr></tbody></table></div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500 min-w-[600px]">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-center">Rank</th>
-                            <th class="px-6 py-3">Model</th>
-                            <th class="px-6 py-3 text-center">Category</th>
-                            <th class="px-6 py-3 text-right">Units</th>
-                            <th class="px-6 py-3 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(car, idx) in filteredRanking" :key="idx" class="bg-white border-b hover:bg-gray-50">
-                            <td class="px-6 py-4 text-center font-bold">{{ idx + 1 }}</td>
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-gray-900 text-base">{{ car.model }}</div>
-                                <div class="text-xs text-gray-500">{{ car.brand }}</div>
-                            </td>
-                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold" :class="getCategoryBadge(car.category)">{{ car.category }}</span></td>
-                            <td class="px-6 py-4 text-right font-bold text-gray-800 text-base">{{ car.count.toLocaleString() }}</td>
-                            <td class="px-6 py-4 text-center">
-                                <button @click="showTrend(car.model)" class="text-blue-600 hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded text-xs">趨勢</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <div v-if="currentView === 'trend'" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="mb-6 max-w-md mx-auto">
-                <label class="block mb-2 text-sm font-medium text-gray-900">查詢歷史趨勢</label>
-                <div class="relative">
-                    <input v-model="trendSearch" type="text" placeholder="輸入車名 (例如: Corolla Cross)..." class="w-full p-3 border border-gray-300 rounded-lg shadow-sm">
-                    <div v-if="trendSuggestions.length > 0 && trendSearch" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                        <div v-for="model in trendSuggestions" @click="selectTrendModel(model)" class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm">{{ model }}</div>
+            <div v-if="currentView === 'trend'" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="mb-6 max-w-md mx-auto">
+                    <label class="block mb-2 text-sm font-medium text-gray-900">查詢歷史趨勢</label>
+                    <div class="relative">
+                        <input v-model="trendSearch" type="text" placeholder="輸入車名 (例如: Corolla Cross)..." class="w-full p-3 border border-gray-300 rounded-lg shadow-sm">
+                        <div v-if="trendSuggestions.length > 0 && trendSearch" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                            <div v-for="model in trendSuggestions" @click="selectTrendModel(model)" class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm">{{ model }}</div>
+                        </div>
                     </div>
                 </div>
+                <div v-if="chartDataAvailable" class="relative h-[400px] w-full"><canvas id="salesChart"></canvas></div>
+                <div v-else class="text-center py-20 text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"><p>請搜尋並選擇車款</p></div>
             </div>
-            <div v-if="chartDataAvailable" class="relative h-[400px] w-full"><canvas id="salesChart"></canvas></div>
-            <div v-else class="text-center py-20 text-gray-400 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"><p>請搜尋並選擇車款</p></div>
         </div>
-
     </main>
 
     <footer class="bg-gray-800 text-white text-center py-4 mt-auto text-sm">
@@ -216,150 +119,43 @@
 <script>
     const { createApp } = Vue;
 
-    const rawSalesData = [
-        // --- 2024 (保持不變) ---
-        {"month": "2024-03", "brand": "中華CMC", "model": "CMC Zinger", "count": 692, "category": "SUV"},
-        {"month": "2024-03", "brand": "福特", "model": "Ford Focus", "count": 594, "category": "Hatchback"},
-        {"month": "2024-03", "brand": "台本", "model": "Honda CR-V", "count": 1460, "category": "SUV"},
-        {"month": "2024-03", "brand": "三陽", "model": "Hyundai Custin", "count": 459, "category": "MPV"},
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus NX", "count": 1079, "category": "SUV"},
-        {"month": "2024-03", "brand": "納智捷", "model": "Luxgen n7", "count": 416, "category": "EV"},
-        {"month": "2024-03", "brand": "MG", "model": "MG HS", "count": 1711, "category": "SUV"},
-        {"month": "2024-03", "brand": "TESLA", "model": "Tesla Model Y", "count": 1337, "category": "EV"},
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Altis", "count": 890, "category": "Sedan"},
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2281, "category": "SUV"},
-        {"month": "2024-03", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1573, "category": "SUV"},
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1502, "category": "SUV"},
-        {"month": "2024-04", "brand": "中華CMC", "model": "CMC Zinger", "count": 572, "category": "SUV"},
-        {"month": "2024-04", "brand": "福特", "model": "Ford Focus", "count": 620, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "台本", "model": "Honda CR-V", "count": 1062, "category": "SUV"},
-        {"month": "2024-04", "brand": "三陽", "model": "Hyundai Custin", "count": 556, "category": "MPV"},
-        {"month": "2024-04", "brand": "LEXUS", "model": "Lexus NX", "count": 999, "category": "SUV"},
-        {"month": "2024-04", "brand": "納智捷", "model": "Luxgen n7", "count": 1055, "category": "EV"},
-        {"month": "2024-04", "brand": "MG", "model": "MG HS", "count": 1627, "category": "SUV"},
-        {"month": "2024-04", "brand": "國瑞", "model": "Toyota Altis", "count": 954, "category": "Sedan"},
-        {"month": "2024-04", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2268, "category": "SUV"},
-        {"month": "2024-04", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1569, "category": "SUV"},
-        {"month": "2024-04", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1418, "category": "SUV"},
-        {"month": "2024-05", "brand": "中華CMC", "model": "CMC Zinger", "count": 602, "category": "SUV"},
-        {"month": "2024-05", "brand": "福特", "model": "Ford Focus", "count": 649, "category": "Hatchback"},
-        {"month": "2024-05", "brand": "台本", "model": "Honda CR-V", "count": 1378, "category": "SUV"},
-        {"month": "2024-05", "brand": "三陽", "model": "Hyundai Custin", "count": 463, "category": "MPV"},
-        {"month": "2024-05", "brand": "LEXUS", "model": "Lexus NX", "count": 696, "category": "SUV"},
-        {"month": "2024-05", "brand": "納智捷", "model": "Luxgen n7", "count": 1100, "category": "EV"},
-        {"month": "2024-05", "brand": "MG", "model": "MG HS", "count": 1283, "category": "SUV"},
-        {"month": "2024-05", "brand": "國瑞", "model": "Toyota Altis", "count": 951, "category": "Sedan"},
-        {"month": "2024-05", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2347, "category": "SUV"},
-        {"month": "2024-05", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1780, "category": "SUV"},
-        {"month": "2024-05", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1378, "category": "SUV"},
-
-        // --- 2025-08 (補齊進口車資料) ---
-        {"month": "2025-08", "brand": "MAZDA", "model": "Mazda 3", "count": 210, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "MAZDA", "model": "Mazda CX-5", "count": 222, "category": "SUV"},
-        {"month": "2025-08", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 195, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "TOYOTA", "model": "Toyota Camry", "count": 310, "category": "Sedan"},
-        {"month": "2025-08", "brand": "KIA", "model": "Kia Sportage", "count": 302, "category": "SUV"},
-        {"month": "2025-08", "brand": "VW", "model": "VW Golf", "count": 150, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "VW", "model": "VW Tiguan", "count": 210, "category": "SUV"},
-        {"month": "2025-08", "brand": "中華CMC", "model": "CMC Zinger", "count": 526, "category": "SUV"},
-        {"month": "2025-08", "brand": "福特", "model": "Ford Focus", "count": 286, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "福特", "model": "Ford Kuga", "count": 249, "category": "SUV"},
-        {"month": "2025-08", "brand": "台本", "model": "Honda CR-V", "count": 978, "category": "SUV"},
-        {"month": "2025-08", "brand": "台本", "model": "Honda Fit", "count": 182, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "台本", "model": "Honda HR-V", "count": 353, "category": "SUV"},
-        {"month": "2025-08", "brand": "三陽", "model": "Hyundai Custin", "count": 313, "category": "MPV"},
-        {"month": "2025-08", "brand": "三陽", "model": "Hyundai Tucson L", "count": 559, "category": "SUV"},
-        {"month": "2025-08", "brand": "LEXUS", "model": "Lexus NX", "count": 668, "category": "SUV"},
-        {"month": "2025-08", "brand": "納智捷", "model": "Luxgen n7", "count": 413, "category": "EV"},
-        {"month": "2025-08", "brand": "BENZ", "model": "M-Benz GLC", "count": 686, "category": "SUV"},
-        {"month": "2025-08", "brand": "MG", "model": "MG HS", "count": 482, "category": "SUV"},
-        {"month": "2025-08", "brand": "裕隆", "model": "Nissan Kicks", "count": 331, "category": "SUV"},
-        {"month": "2025-08", "brand": "裕隆", "model": "Nissan Sentra", "count": 195, "category": "Sedan"},
-        {"month": "2025-08", "brand": "TESLA", "model": "Tesla Model Y", "count": 765, "category": "EV"},
-        {"month": "2025-08", "brand": "國瑞", "model": "Toyota Altis", "count": 789, "category": "Sedan"},
-        {"month": "2025-08", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 1903, "category": "SUV"},
-        {"month": "2025-08", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1285, "category": "SUV"},
-        {"month": "2025-08", "brand": "國瑞", "model": "Toyota Town Ace", "count": 1914, "category": "Other"},
-        {"month": "2025-08", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1115, "category": "SUV"},
-
-        // --- 2025-09 (補齊資料) ---
-        {"month": "2025-09", "brand": "MAZDA", "model": "Mazda 3", "count": 225, "category": "Hatchback"},
-        {"month": "2025-09", "brand": "MAZDA", "model": "Mazda CX-5", "count": 240, "category": "SUV"},
-        {"month": "2025-09", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 180, "category": "Hatchback"},
-        {"month": "2025-09", "brand": "TOYOTA", "model": "Toyota Camry", "count": 350, "category": "Sedan"},
-        {"month": "2025-09", "brand": "KIA", "model": "Kia Sportage", "count": 280, "category": "SUV"},
-        {"month": "2025-09", "brand": "VW", "model": "VW Golf", "count": 160, "category": "Hatchback"},
-        {"month": "2025-09", "brand": "中華CMC", "model": "CMC Zinger", "count": 558, "category": "SUV"},
-        {"month": "2025-09", "brand": "福特", "model": "Ford Focus", "count": 348, "category": "Hatchback"},
-        {"month": "2025-09", "brand": "台本", "model": "Honda CR-V", "count": 1052, "category": "SUV"},
-        {"month": "2025-09", "brand": "三陽", "model": "Hyundai Custin", "count": 382, "category": "MPV"},
-        {"month": "2025-09", "brand": "三陽", "model": "Hyundai Tucson L", "count": 612, "category": "SUV"},
-        {"month": "2025-09", "brand": "LEXUS", "model": "Lexus NX", "count": 847, "category": "SUV"},
-        {"month": "2025-09", "brand": "納智捷", "model": "Luxgen n7", "count": 594, "category": "EV"},
-        {"month": "2025-09", "brand": "BENZ", "model": "M-Benz GLC", "count": 732, "category": "SUV"},
-        {"month": "2025-09", "brand": "MG", "model": "MG HS", "count": 243, "category": "SUV"},
-        {"month": "2025-09", "brand": "裕隆", "model": "Nissan Kicks", "count": 482, "category": "SUV"},
-        {"month": "2025-09", "brand": "TESLA", "model": "Tesla Model 3", "count": 921, "category": "EV"},
-        {"month": "2025-09", "brand": "TESLA", "model": "Tesla Model Y", "count": 1135, "category": "EV"},
-        {"month": "2025-09", "brand": "國瑞", "model": "Toyota Altis", "count": 1082, "category": "Sedan"},
-        {"month": "2025-09", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 1949, "category": "SUV"},
-        {"month": "2025-09", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1669, "category": "SUV"},
-        {"month": "2025-09", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1412, "category": "SUV"},
-        {"month": "2025-09", "brand": "國瑞", "model": "Toyota Vios", "count": 330, "category": "Sedan"},
-        {"month": "2025-09", "brand": "台本", "model": "Honda Fit", "count": 195, "category": "Hatchback"},
-
-        // --- 2025-10 (已補齊所有缺漏車款) ---
-        {"month": "2025-10", "brand": "中華CMC", "model": "CMC Zinger", "count": 612, "category": "SUV"},
-        {"month": "2025-10", "brand": "福特", "model": "Ford Focus", "count": 402, "category": "Hatchback"},
-        {"month": "2025-10", "brand": "福特", "model": "Ford Kuga", "count": 421, "category": "SUV"},
-        {"month": "2025-10", "brand": "台本", "model": "Honda CR-V", "count": 1152, "category": "SUV"},
-        {"month": "2025-10", "brand": "三陽", "model": "Hyundai Custin", "count": 425, "category": "MPV"},
-        {"month": "2025-10", "brand": "三陽", "model": "Hyundai Tucson L", "count": 685, "category": "SUV"},
-        {"month": "2025-10", "brand": "LEXUS", "model": "Lexus NX", "count": 952, "category": "SUV"},
-        {"month": "2025-10", "brand": "LEXUS", "model": "Lexus RX", "count": 420, "category": "SUV"}, // 補
-        {"month": "2025-10", "brand": "LEXUS", "model": "Lexus UX", "count": 310, "category": "SUV"}, // 補
-        {"month": "2025-10", "brand": "納智捷", "model": "Luxgen n7", "count": 382, "category": "EV"},
-        {"month": "2025-10", "brand": "BENZ", "model": "M-Benz GLC", "count": 621, "category": "SUV"},
-        {"month": "2025-10", "brand": "MG", "model": "MG HS", "count": 182, "category": "SUV"},
-        {"month": "2025-10", "brand": "裕隆", "model": "Nissan X-Trail", "count": 550, "category": "SUV"},
-        {"month": "2025-10", "brand": "裕隆", "model": "Nissan Sentra", "count": 285, "category": "Sedan"}, // 補：國產轎車 No.3
-        {"month": "2025-10", "brand": "裕隆", "model": "Nissan Kicks", "count": 350, "category": "SUV"}, // 補
-        {"month": "2025-10", "brand": "TESLA", "model": "Tesla Model Y", "count": 821, "category": "EV"},
-        {"month": "2025-10", "brand": "TESLA", "model": "Tesla Model 3", "count": 450, "category": "EV"}, // 補：電動車 No.2
-        {"month": "2025-10", "brand": "BMW", "model": "BMW iX1", "count": 210, "category": "EV"}, // 補：電動車 No.3
-        {"month": "2025-10", "brand": "國瑞", "model": "Toyota Altis", "count": 982, "category": "Sedan"},
-        {"month": "2025-10", "brand": "國瑞", "model": "Toyota Vios", "count": 410, "category": "Sedan"}, // 補：國產轎車 No.2
-        {"month": "2025-10", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 3476, "category": "SUV"},
-        {"month": "2025-10", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1592, "category": "SUV"},
-        {"month": "2025-10", "brand": "TOYOTA", "model": "Toyota Camry", "count": 360, "category": "Sedan"}, // 補：進口轎車 No.1
-        {"month": "2025-10", "brand": "國瑞", "model": "Toyota Town Ace", "count": 2056, "category": "Other"},
-        {"month": "2025-10", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1285, "category": "SUV"},
-        {"month": "2025-10", "brand": "MAZDA", "model": "Mazda 3", "count": 255, "category": "Hatchback"}, // 補：進口轎車 No.2
-        {"month": "2025-10", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 190, "category": "Hatchback"}, // 補：進口轎車 No.3
-        {"month": "2025-10", "brand": "MAZDA", "model": "Mazda CX-5", "count": 280, "category": "SUV"}, // 補：進口休旅 No.3
-        {"month": "2025-10", "brand": "VOLVO", "model": "Volvo XC40", "count": 180, "category": "SUV"}, // 補
-        {"month": "2025-10", "brand": "台本", "model": "Honda Fit", "count": 160, "category": "Hatchback"} // 補
-    ];
-
     createApp({
         data() {
             return {
                 currentView: 'dashboard',
-                selectedMonth: '2025-10',
+                selectedMonth: '',
                 filterCategory: 'All',
                 searchQuery: '',
                 trendSearch: '',
                 salesData: [],
                 chartInstance: null,
-                battlefields: []
+                battlefields: [],
+                loading: true
             }
         },
-        created() {
-            this.salesData = rawSalesData.map(d => ({
-                ...d,
-                source: this.getCarSource(d.brand, d.model)
-            }));
-            this.updateBattlefields();
+        mounted() {
+            // 自動抓取同目錄下的 sales-data.json 檔案
+            // 加個 timestamp 避免快取 (?v=...)
+            fetch('./sales-data.json?v=' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    // 處理資料：加上國產/進口標籤
+                    this.salesData = data.map(d => ({
+                        ...d,
+                        source: this.getCarSource(d.brand, d.model)
+                    }));
+                    
+                    // 自動設定為最新月份
+                    const months = [...new Set(this.salesData.map(d => d.month))].sort().reverse();
+                    if (months.length > 0) this.selectedMonth = months[0];
+                    
+                    this.updateBattlefields();
+                    this.loading = false;
+                })
+                .catch(err => {
+                    console.error('Data Load Error:', err);
+                    this.loading = false;
+                });
         },
         computed: {
             sortedMonths() {
@@ -402,6 +198,7 @@
         },
         methods: {
             formatMonth(ym) {
+                if (!ym) return '';
                 const [y, m] = ym.split('-');
                 return `${y}年 ${parseInt(m)}月`;
             },
