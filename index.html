@@ -28,6 +28,8 @@
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         #car-sales-app table { width: 100%; border-collapse: collapse; }
         .rank-badge { width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; color: white; }
+        /* 增加按鈕互動感 */
+        .hover-lift:hover { transform: translateY(-2px); transition: transform 0.2s; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -78,14 +80,20 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="battle in battlefields" :key="battle.title" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col">
-                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center" :class="battle.bgLight">
+                    <div v-for="battle in battlefields" :key="battle.title" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col hover-lift">
+                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center cursor-pointer" 
+                             :class="battle.bgLight"
+                             @click="jumpToRanking(battle.filterKey)">
                             <div class="flex items-center gap-2">
                                 <i :class="[battle.icon, battle.textClass]"></i>
                                 <h3 class="font-bold text-gray-800 m-0">{{ battle.title }}</h3>
                             </div>
+                            <button class="text-xs font-bold text-gray-500 hover:text-blue-600 bg-white bg-opacity-50 px-2 py-1 rounded border border-transparent hover:border-blue-200 transition">
+                                完整榜單 &raquo;
+                            </button>
                         </div>
-                        <div class="p-5 flex-1 flex flex-col justify-between">
+
+                        <div class="p-5 flex-1 flex flex-col justify-between cursor-pointer" @click="jumpToRanking(battle.filterKey)">
                             <div v-if="battle.data.length > 0" class="mb-4">
                                 <div class="flex justify-between items-end mb-1">
                                     <span class="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">CHAMPION</span>
@@ -144,17 +152,21 @@
 
             <div v-if="currentView === 'ranking'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
                 <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row gap-4 justify-between">
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <select v-model="selectedMonth" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5">
                             <option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option>
                         </select>
-                        <select v-model="filterCategory" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5">
-                            <option value="All">所有車種</option>
-                            <option value="SUV">SUV 休旅</option>
-                            <option value="Sedan">Sedan 房車</option>
-                            <option value="Hatchback">Hatch 掀背</option>
-                            <option value="MPV">MPV 廂式</option>
-                            <option value="EV">EV 電動車</option>
+                        <select v-model="filterCategory" class="bg-white border border-gray-300 text-sm rounded-lg p-2.5 font-bold text-gray-700">
+                            <option value="All">🏆 所有車種總排行</option>
+                            <hr>
+                            <option value="Domestic_SUV">🚙 國產休旅排行</option>
+                            <option value="Import_SUV">✈️ 進口休旅排行</option>
+                            <option value="Domestic_Car">🚗 國產轎車/掀背排行</option>
+                            <option value="Import_Car">✈️ 進口轎車/掀背排行</option>
+                            <option value="Luxury">💎 豪華品牌排行</option>
+                            <option value="EV">⚡ 電動車排行</option>
+                            <hr>
+                            <option value="MPV">🚐 MPV 廂式休旅</option>
                         </select>
                     </div>
                     <div class="relative w-full md:w-64">
@@ -174,15 +186,20 @@
                         </thead>
                         <tbody>
                             <tr v-for="(car, idx) in filteredRanking" :key="idx" class="bg-white border-b hover:bg-gray-50">
-                                <td class="px-6 py-4 text-center font-bold">{{ idx + 1 }}</td>
+                                <td class="px-6 py-4 text-center font-bold text-gray-500">{{ idx + 1 }}</td>
                                 <td class="px-6 py-4">
                                     <div class="font-bold text-gray-900 text-base">{{ car.model }}</div>
-                                    <div class="text-xs text-gray-500">{{ car.brand }}</div>
+                                    <div class="text-xs text-gray-500">{{ car.brand }} <span v-if="car.source" class="ml-1 px-1 rounded bg-gray-100 text-gray-500 text-[10px]">{{ car.source === 'Domestic' ? '國產' : '進口' }}</span></div>
                                 </td>
                                 <td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold" :class="getCategoryBadge(car.category)">{{ car.category }}</span></td>
                                 <td class="px-6 py-4 text-right font-bold text-gray-800 text-base">{{ car.count.toLocaleString() }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <button @click="showTrend(car.model)" class="text-blue-600 hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded text-xs">趨勢</button>
+                                </td>
+                            </tr>
+                            <tr v-if="filteredRanking.length === 0">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                    <i class="fas fa-folder-open text-3xl mb-2"></i><br>此分類本月無資料
                                 </td>
                             </tr>
                         </tbody>
@@ -270,7 +287,24 @@
             },
             filteredRanking() {
                 let data = this.currentMonthData;
-                if (this.filterCategory !== 'All') data = data.filter(d => d.category === this.filterCategory);
+                
+                // === 這裡處理複雜的分類邏輯 ===
+                if (this.filterCategory === 'Domestic_SUV') {
+                    data = data.filter(d => d.source === 'Domestic' && d.category === 'SUV');
+                } else if (this.filterCategory === 'Import_SUV') {
+                    data = data.filter(d => d.source === 'Import' && d.category === 'SUV' && !this.isLuxury(d.brand));
+                } else if (this.filterCategory === 'Domestic_Car') {
+                    data = data.filter(d => d.source === 'Domestic' && (d.category === 'Sedan' || d.category === 'Hatchback'));
+                } else if (this.filterCategory === 'Import_Car') {
+                    data = data.filter(d => d.source === 'Import' && (d.category === 'Sedan' || d.category === 'Hatchback') && !this.isLuxury(d.brand));
+                } else if (this.filterCategory === 'Luxury') {
+                    data = data.filter(d => this.isLuxury(d.brand));
+                } else if (this.filterCategory === 'EV') {
+                    data = data.filter(d => d.category === 'EV');
+                } else if (this.filterCategory !== 'All') {
+                    data = data.filter(d => d.category === this.filterCategory);
+                }
+
                 if (this.searchQuery) {
                     const q = this.searchQuery.toLowerCase();
                     data = data.filter(d => d.model.toLowerCase().includes(q) || d.brand.toLowerCase().includes(q));
@@ -287,10 +321,8 @@
         },
         watch: {
             selectedMonth() { this.updateBattlefields(); },
-            // 監聽分頁切換，如果切換到趨勢頁且已有選擇車款，就延遲畫圖
             currentView(newVal) {
                 if (newVal === 'trend' && this.trendSearch && this.hasSelectedCar) {
-                    // 關鍵修正：增加延遲到 300ms，確保 Vue v-if 動畫完成且 Canvas 已存在 DOM 中
                     setTimeout(() => {
                         this.renderChart(this.trendSearch);
                     }, 300);
@@ -335,50 +367,60 @@
                 this.battlefields = [
                     { 
                         title: '國產休旅 Top 3', 
+                        filterKey: 'Domestic_SUV',
                         icon: 'fas fa-truck-monster', 
                         textClass: 'text-orange-600', bgLight: 'bg-orange-50',
                         data: getTop3(d => d.source === 'Domestic' && d.category === 'SUV')
                     },
                     { 
                         title: '進口休旅 Top 3', 
+                        filterKey: 'Import_SUV',
                         icon: 'fas fa-plane-arrival', 
                         textClass: 'text-blue-600', bgLight: 'bg-blue-50',
                         data: getTop3(d => d.source === 'Import' && d.category === 'SUV' && !this.isLuxury(d.brand))
                     },
                     { 
                         title: '國產轎車/掀背 Top 3', 
+                        filterKey: 'Domestic_Car',
                         icon: 'fas fa-car-side', 
                         textClass: 'text-green-600', bgLight: 'bg-green-50',
                         data: getTop3(d => d.source === 'Domestic' && (d.category === 'Sedan' || d.category === 'Hatchback'))
                     },
                     { 
                         title: '進口轎車/掀背 Top 3', 
+                        filterKey: 'Import_Car',
                         icon: 'fas fa-car', 
                         textClass: 'text-teal-600', bgLight: 'bg-teal-50',
                         data: getTop3(d => d.source === 'Import' && (d.category === 'Sedan' || d.category === 'Hatchback') && !this.isLuxury(d.brand))
                     },
                     { 
                         title: '豪華品牌 Top 3', 
+                        filterKey: 'Luxury',
                         icon: 'fas fa-gem', 
                         textClass: 'text-purple-600', bgLight: 'bg-purple-50',
                         data: getTop3(d => this.isLuxury(d.brand))
                     },
                     { 
                         title: '電動車 Top 3', 
+                        filterKey: 'EV',
                         icon: 'fas fa-bolt', 
                         textClass: 'text-yellow-600', bgLight: 'bg-yellow-50',
                         data: getTop3(d => d.category === 'EV')
                     }
                 ];
             },
+            jumpToRanking(filterKey) {
+                this.filterCategory = filterKey;
+                this.currentView = 'ranking';
+            },
             showTrend(modelName) {
-                // 1. 設定資料
+                this.currentView = 'trend';
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
                 this.showDropdown = false;
-                
-                // 2. 切換分頁 (這會觸發 watcher)
-                this.currentView = 'trend';
+                setTimeout(() => {
+                    this.renderChart(modelName);
+                }, 300);
             },
             selectTrendModel(modelName) {
                 this.trendSearch = modelName;
@@ -391,16 +433,13 @@
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
                 if (!ctx) return;
-                
                 const modelData = this.salesData.filter(d => d.model === modelName);
                 const months = [...new Set(this.salesData.map(d => d.month))].sort();
                 const counts = months.map(m => {
                     const record = modelData.find(d => d.month === m);
                     return record ? record.count : 0;
                 });
-                
                 if (this.chartInstance) this.chartInstance.destroy();
-                
                 this.chartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
