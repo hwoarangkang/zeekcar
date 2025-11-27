@@ -24,6 +24,8 @@
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        /* 樣式微調 */
         #car-sales-app button { border-style: solid; cursor: pointer; }
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         #car-sales-app table { width: 100%; border-collapse: collapse; }
@@ -194,8 +196,14 @@
                 <div class="mb-6 max-w-md mx-auto">
                     <label class="block mb-2 text-sm font-medium text-gray-900">查詢歷史趨勢</label>
                     <div class="relative">
-                        <input v-model="trendSearch" type="text" placeholder="輸入車名 (例如: Corolla Cross)..." class="w-full p-3 border border-gray-300 rounded-lg shadow-sm">
-                        <div v-if="trendSuggestions.length > 0 && trendSearch" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                        <input v-model="trendSearch" 
+                               @input="showDropdown = true" 
+                               @focus="showDropdown = true"
+                               type="text" 
+                               placeholder="輸入車名 (例如: Corolla Cross)..." 
+                               class="w-full p-3 border border-gray-300 rounded-lg shadow-sm">
+                        
+                        <div v-if="trendSuggestions.length > 0 && trendSearch && showDropdown" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                             <div v-for="model in trendSuggestions" @click="selectTrendModel(model)" class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm">{{ model }}</div>
                         </div>
                     </div>
@@ -222,11 +230,12 @@
                 filterCategory: 'All',
                 searchQuery: '',
                 trendSearch: '',
+                showDropdown: false, // 控制下拉選單開關
                 salesData: [],
                 chartInstance: null,
                 battlefields: [],
                 loading: true,
-                hasSelectedCar: false // 新增這個開關
+                hasSelectedCar: false
             }
         },
         mounted() {
@@ -275,7 +284,8 @@
                 const q = this.trendSearch.toLowerCase();
                 const allModels = [...new Set(this.salesData.map(d => d.model))];
                 return allModels.filter(m => m.toLowerCase().includes(q)).slice(0, 5);
-            }
+            },
+            chartDataAvailable() { return this.chartInstance !== null; }
         },
         watch: {
             selectedMonth() { this.updateBattlefields(); },
@@ -362,12 +372,14 @@
             showTrend(modelName) {
                 this.currentView = 'trend';
                 this.trendSearch = modelName;
-                this.hasSelectedCar = true; // 關鍵修正
+                this.hasSelectedCar = true;
+                this.showDropdown = false; // 關閉選單
                 this.$nextTick(() => this.renderChart(modelName));
             },
             selectTrendModel(modelName) {
                 this.trendSearch = modelName;
-                this.hasSelectedCar = true; // 關鍵修正
+                this.hasSelectedCar = true;
+                this.showDropdown = false; // 關閉選單
                 this.$nextTick(() => this.renderChart(modelName));
             },
             renderChart(modelName) {
