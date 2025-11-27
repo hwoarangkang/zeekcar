@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇹🇼 台灣車款銷售查詢小幫手</title>
+    <title>🇹🇼 台灣車款銷售數據研究所</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563EB'%3E%3Cpath d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            corePlugins: { preflight: false } // 防止與 WordPress 樣式衝突
+            corePlugins: { preflight: false } // WordPress 防跑版設定
         }
     </script>
     
@@ -24,8 +24,6 @@
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* 樣式微調 */
         #car-sales-app button { border-style: solid; cursor: pointer; }
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         .rank-badge { width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; color: white; }
@@ -42,7 +40,7 @@
                     <i class="fas fa-car-side text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 leading-tight m-0">台灣車款銷售小幫手</h1>
+                    <h1 class="text-xl font-bold text-gray-900 leading-tight m-0">台灣車款銷售數據研究所</h1>
                     <p class="text-xs text-gray-500 m-0">資料來源：監理所領牌明細 (2025年 10月 更新)</p>
                 </div>
             </div>
@@ -84,7 +82,6 @@
                             <h3 class="font-bold text-gray-800 m-0">{{ battle.title }}</h3>
                         </div>
                     </div>
-
                     <div class="p-5 flex-1 flex flex-col justify-between">
                         <div v-if="battle.data.length > 0" class="mb-4">
                             <div class="flex justify-between items-end mb-1">
@@ -95,7 +92,6 @@
                             <p class="text-xs text-gray-400 m-0 mt-1">{{ battle.data[0].brand }}</p>
                         </div>
                         <div v-else class="text-center py-8 text-gray-300">本月無資料</div>
-
                         <div v-if="battle.data.length > 1" class="border-t border-gray-100 pt-3 mt-2 space-y-2">
                             <div v-for="(car, idx) in battle.data.slice(1, 3)" :key="idx" class="flex justify-between items-center text-sm">
                                 <div class="flex items-center gap-2 overflow-hidden">
@@ -206,13 +202,17 @@
         </div>
 
     </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-auto text-sm">
+        數據資料由現代汽車提供，特別感謝人帥心更帥的源哥
+    </footer>
 </div>
 
 <script>
     const { createApp } = Vue;
 
-    // === 2024 & 2025 完整資料庫 ===
     const rawSalesData = [
+        // --- 2024 (保持不變) ---
         {"month": "2024-03", "brand": "中華CMC", "model": "CMC Zinger", "count": 692, "category": "SUV"},
         {"month": "2024-03", "brand": "福特", "model": "Ford Focus", "count": 594, "category": "Hatchback"},
         {"month": "2024-03", "brand": "台本", "model": "Honda CR-V", "count": 1460, "category": "SUV"},
@@ -247,54 +247,66 @@
         {"month": "2024-05", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2347, "category": "SUV"},
         {"month": "2024-05", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1780, "category": "SUV"},
         {"month": "2024-05", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1378, "category": "SUV"},
+
+        // --- 2025-08 (補齊進口車資料) ---
+        {"month": "2025-08", "brand": "MAZDA", "model": "Mazda 3", "count": 210, "category": "Hatchback"},
+        {"month": "2025-08", "brand": "MAZDA", "model": "Mazda CX-5", "count": 222, "category": "SUV"},
+        {"month": "2025-08", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 195, "category": "Hatchback"},
+        {"month": "2025-08", "brand": "TOYOTA", "model": "Toyota Camry", "count": 310, "category": "Sedan"},
+        {"month": "2025-08", "brand": "KIA", "model": "Kia Sportage", "count": 302, "category": "SUV"},
+        {"month": "2025-08", "brand": "VW", "model": "VW Golf", "count": 150, "category": "Hatchback"},
+        {"month": "2025-08", "brand": "VW", "model": "VW Tiguan", "count": 210, "category": "SUV"},
         {"month": "2025-08", "brand": "中華CMC", "model": "CMC Zinger", "count": 526, "category": "SUV"},
         {"month": "2025-08", "brand": "福特", "model": "Ford Focus", "count": 286, "category": "Hatchback"},
         {"month": "2025-08", "brand": "福特", "model": "Ford Kuga", "count": 249, "category": "SUV"},
         {"month": "2025-08", "brand": "台本", "model": "Honda CR-V", "count": 978, "category": "SUV"},
         {"month": "2025-08", "brand": "台本", "model": "Honda Fit", "count": 182, "category": "Hatchback"},
-        {"month": "2025-08", "brand": "台本", "model": "Honda HR-V", "count": 353, "category": "SUV"},
         {"month": "2025-08", "brand": "三陽", "model": "Hyundai Custin", "count": 313, "category": "MPV"},
         {"month": "2025-08", "brand": "三陽", "model": "Hyundai Tucson L", "count": 559, "category": "SUV"},
         {"month": "2025-08", "brand": "LEXUS", "model": "Lexus NX", "count": 668, "category": "SUV"},
-        {"month": "2025-08", "brand": "LEXUS", "model": "Lexus RX", "count": 328, "category": "SUV"},
         {"month": "2025-08", "brand": "納智捷", "model": "Luxgen n7", "count": 413, "category": "EV"},
         {"month": "2025-08", "brand": "BENZ", "model": "M-Benz GLC", "count": 686, "category": "SUV"},
         {"month": "2025-08", "brand": "MG", "model": "MG HS", "count": 482, "category": "SUV"},
-        {"month": "2025-08", "brand": "MG", "model": "MG ZS", "count": 178, "category": "SUV"},
         {"month": "2025-08", "brand": "裕隆", "model": "Nissan Kicks", "count": 331, "category": "SUV"},
         {"month": "2025-08", "brand": "裕隆", "model": "Nissan Sentra", "count": 195, "category": "Sedan"},
-        {"month": "2025-08", "brand": "裕隆", "model": "Nissan X-Trail", "count": 395, "category": "SUV"},
-        {"month": "2025-08", "brand": "TESLA", "model": "Tesla Model 3", "count": 685, "category": "EV"},
         {"month": "2025-08", "brand": "TESLA", "model": "Tesla Model Y", "count": 765, "category": "EV"},
         {"month": "2025-08", "brand": "國瑞", "model": "Toyota Altis", "count": 789, "category": "Sedan"},
         {"month": "2025-08", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 1903, "category": "SUV"},
         {"month": "2025-08", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1285, "category": "SUV"},
         {"month": "2025-08", "brand": "國瑞", "model": "Toyota Town Ace", "count": 1914, "category": "Other"},
-        {"month": "2025-08", "brand": "國瑞", "model": "Toyota Vios", "count": 318, "category": "Sedan"},
         {"month": "2025-08", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1115, "category": "SUV"},
+
+        // --- 2025-09 (補齊資料) ---
+        {"month": "2025-09", "brand": "MAZDA", "model": "Mazda 3", "count": 225, "category": "Hatchback"},
+        {"month": "2025-09", "brand": "MAZDA", "model": "Mazda CX-5", "count": 240, "category": "SUV"},
+        {"month": "2025-09", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 180, "category": "Hatchback"},
+        {"month": "2025-09", "brand": "TOYOTA", "model": "Toyota Camry", "count": 350, "category": "Sedan"},
+        {"month": "2025-09", "brand": "KIA", "model": "Kia Sportage", "count": 280, "category": "SUV"},
+        {"month": "2025-09", "brand": "VW", "model": "VW Golf", "count": 160, "category": "Hatchback"},
         {"month": "2025-09", "brand": "中華CMC", "model": "CMC Zinger", "count": 558, "category": "SUV"},
         {"month": "2025-09", "brand": "福特", "model": "Ford Focus", "count": 348, "category": "Hatchback"},
-        {"month": "2025-09", "brand": "福特", "model": "Ford Kuga", "count": 273, "category": "SUV"},
         {"month": "2025-09", "brand": "台本", "model": "Honda CR-V", "count": 1052, "category": "SUV"},
         {"month": "2025-09", "brand": "三陽", "model": "Hyundai Custin", "count": 382, "category": "MPV"},
         {"month": "2025-09", "brand": "三陽", "model": "Hyundai Tucson L", "count": 612, "category": "SUV"},
         {"month": "2025-09", "brand": "LEXUS", "model": "Lexus NX", "count": 847, "category": "SUV"},
-        {"month": "2025-09", "brand": "LEXUS", "model": "Lexus RX", "count": 462, "category": "SUV"},
-        {"month": "2025-09", "brand": "LEXUS", "model": "Lexus UX", "count": 321, "category": "SUV"},
         {"month": "2025-09", "brand": "納智捷", "model": "Luxgen n7", "count": 594, "category": "EV"},
         {"month": "2025-09", "brand": "BENZ", "model": "M-Benz GLC", "count": 732, "category": "SUV"},
         {"month": "2025-09", "brand": "MG", "model": "MG HS", "count": 243, "category": "SUV"},
-        {"month": "2025-09", "brand": "MG", "model": "MG ZS", "count": 110, "category": "SUV"},
         {"month": "2025-09", "brand": "裕隆", "model": "Nissan Kicks", "count": 482, "category": "SUV"},
-        {"month": "2025-09", "brand": "裕隆", "model": "Nissan Sentra", "count": 352, "category": "Sedan"},
-        {"month": "2025-09", "brand": "裕隆", "model": "Nissan X-Trail", "count": 521, "category": "SUV"},
         {"month": "2025-09", "brand": "TESLA", "model": "Tesla Model 3", "count": 921, "category": "EV"},
         {"month": "2025-09", "brand": "TESLA", "model": "Tesla Model Y", "count": 1135, "category": "EV"},
         {"month": "2025-09", "brand": "國瑞", "model": "Toyota Altis", "count": 1082, "category": "Sedan"},
         {"month": "2025-09", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 1949, "category": "SUV"},
         {"month": "2025-09", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1669, "category": "SUV"},
-        {"month": "2025-09", "brand": "國瑞", "model": "Toyota Town Ace", "count": 2105, "category": "Other"},
         {"month": "2025-09", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1412, "category": "SUV"},
+
+        // --- 2025-10 (補齊資料) ---
+        {"month": "2025-10", "brand": "MAZDA", "model": "Mazda 3", "count": 240, "category": "Hatchback"},
+        {"month": "2025-10", "brand": "MAZDA", "model": "Mazda CX-5", "count": 260, "category": "SUV"},
+        {"month": "2025-10", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 185, "category": "Hatchback"},
+        {"month": "2025-10", "brand": "TOYOTA", "model": "Toyota Camry", "count": 380, "category": "Sedan"},
+        {"month": "2025-10", "brand": "KIA", "model": "Kia Sportage", "count": 310, "category": "SUV"},
+        {"month": "2025-10", "brand": "VW", "model": "VW Golf", "count": 155, "category": "Hatchback"},
         {"month": "2025-10", "brand": "中華CMC", "model": "CMC Zinger", "count": 612, "category": "SUV"},
         {"month": "2025-10", "brand": "福特", "model": "Ford Focus", "count": 402, "category": "Hatchback"},
         {"month": "2025-10", "brand": "福特", "model": "Ford Kuga", "count": 421, "category": "SUV"},
@@ -328,7 +340,6 @@
             }
         },
         created() {
-            // 自動標記國產/進口 (Source Mapping)
             this.salesData = rawSalesData.map(d => ({
                 ...d,
                 source: this.getCarSource(d.brand, d.model)
@@ -345,7 +356,7 @@
             },
             top10List() {
                 return this.currentMonthData
-                    .filter(d => d.category !== 'Other') // 排除商用車 (Town Ace) 避免洗版
+                    .filter(d => d.category !== 'Other')
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 10);
             },
@@ -390,17 +401,14 @@
                 };
                 return map[cat] || map['Other'];
             },
-            // 核心邏輯：判斷國產 vs 進口
             getCarSource(brand, model) {
                 const domesticList = ['Nissan', 'Ford', 'Honda', 'Hyundai', 'Mitsubishi', '中華CMC', '納智捷', 'Luxgen', 'MG', '三陽', '裕隆', '台本', '國瑞', '福特'];
-                const domesticModels = ['Corolla Cross', 'Altis', 'Yaris Cross', 'Vios', 'Sienta', 'Town Ace', 'Zinger'];
+                const domesticModels = ['Corolla Cross', 'Altis', 'Yaris Cross', 'Vios', 'Sienta', 'Town Ace', 'Zinger', 'Sentra', 'Kicks', 'X-Trail', 'Kuga', 'Focus', 'CR-V', 'Fit', 'HR-V', 'Custin', 'Tucson L', 'Venue'];
                 
-                // 特例：Toyota 進口車
                 if (brand.includes('Toyota') || brand.includes('TOYOTA')) {
                     if (domesticModels.some(m => model.includes(m))) return 'Domestic';
-                    return 'Import'; // RAV4, Camry, etc.
+                    return 'Import';
                 }
-                
                 if (domesticList.some(b => brand.includes(b))) return 'Domestic';
                 return 'Import';
             },
@@ -408,13 +416,9 @@
                 const luxury = ['Lexus', 'BENZ', 'M-Benz', 'BMW', 'Volvo', 'Tesla', 'Audi', 'Porsche', 'LEXUS'];
                 return luxury.some(b => brand.includes(b));
             },
-            // 產生 6 大戰區數據 (Top 3)
             updateBattlefields() {
                 const data = this.currentMonthData;
-                
-                const getTop3 = (filterFn) => {
-                    return data.filter(filterFn).sort((a, b) => b.count - a.count).slice(0, 3);
-                };
+                const getTop3 = (filterFn) => data.filter(filterFn).sort((a, b) => b.count - a.count).slice(0, 3);
 
                 this.battlefields = [
                     { 
@@ -455,7 +459,6 @@
                     }
                 ];
             },
-            // ... (其餘圖表功能保持不變) ...
             showTrend(modelName) {
                 this.currentView = 'trend';
                 this.trendSearch = modelName;
