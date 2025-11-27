@@ -4,43 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🇹🇼 台灣車款銷售查詢小幫手</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563EB'%3E%3Cpath d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'/%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                preflight: false, 
+            }
+        }
+    </script>
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; }
+        
+        /* 確保工具內的字體正確 */
+        #car-sales-app { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            line-height: 1.5;
+        }
+        
+        /* v-cloak: 在 Vue 載入完成前隱藏內容 */
+        [v-cloak] { display: none; }
+        
+        /* 簡單的淡入動畫 */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        /* 修正 WordPress 可能造成的樣式衝突 */
+        #car-sales-app button { border-style: solid; cursor: pointer; }
+        #car-sales-app input, #car-sales-app select { border-style: solid; }
+        #car-sales-app table { border-collapse: collapse; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-<div id="app" class="max-w-6xl mx-auto min-h-screen flex flex-col">
+<div id="car-sales-app" v-cloak class="max-w-6xl mx-auto min-h-screen flex flex-col bg-gray-50">
     
-    <header class="bg-white shadow-sm sticky top-0 z-20">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header class="bg-white shadow-sm sticky top-0 z-20 border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg">
+                <div class="bg-blue-600 text-white p-2 rounded-lg flex items-center justify-center w-10 h-10">
                     <i class="fas fa-car-side text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 leading-tight">台灣車款銷售小幫手</h1>
-                    <p class="text-xs text-gray-500">資料來源：監理所領牌明細 (2024/03 - 2024/05)</p>
+                    <h1 class="text-xl font-bold text-gray-900 leading-tight m-0">台灣車款銷售小幫手</h1>
+                    <p class="text-xs text-gray-500 m-0">資料來源：監理所領牌明細</p>
                 </div>
             </div>
             
             <div class="flex bg-gray-100 p-1 rounded-lg">
-                <button @click="currentView = 'dashboard'" :class="{'bg-white shadow text-blue-600': currentView === 'dashboard'}" class="px-4 py-2 rounded-md text-sm font-bold transition">
-                    <i class="fas fa-trophy mr-1"></i> 戰況看板
+                <button @click="currentView = 'dashboard'" :class="{'bg-white shadow text-blue-600': currentView === 'dashboard', 'text-gray-600 hover:bg-gray-200': currentView !== 'dashboard'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
+                    <i class="fas fa-trophy mr-1"></i> 戰況
                 </button>
-                <button @click="currentView = 'ranking'" :class="{'bg-white shadow text-blue-600': currentView === 'ranking'}" class="px-4 py-2 rounded-md text-sm font-bold transition">
-                    <i class="fas fa-list-ol mr-1"></i> 完整榜單
+                <button @click="currentView = 'ranking'" :class="{'bg-white shadow text-blue-600': currentView === 'ranking', 'text-gray-600 hover:bg-gray-200': currentView !== 'ranking'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
+                    <i class="fas fa-list-ol mr-1"></i> 榜單
                 </button>
-                <button @click="currentView = 'trend'" :class="{'bg-white shadow text-blue-600': currentView === 'trend'}" class="px-4 py-2 rounded-md text-sm font-bold transition">
-                    <i class="fas fa-chart-line mr-1"></i> 銷售趨勢
+                <button @click="currentView = 'trend'" :class="{'bg-white shadow text-blue-600': currentView === 'trend', 'text-gray-600 hover:bg-gray-200': currentView !== 'trend'}" class="px-4 py-2 rounded-md text-sm font-bold transition border-0">
+                    <i class="fas fa-chart-line mr-1"></i> 趨勢
                 </button>
             </div>
         </div>
@@ -49,10 +75,10 @@
     <main class="flex-1 container mx-auto px-4 py-6">
         
         <div v-if="currentView === 'dashboard'" class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">🏆 本月各級距銷售冠軍</h2>
-                <div class="relative">
-                    <select v-model="selectedMonth" class="appearance-none bg-white border border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800 m-0">🏆 本月各級距銷售冠軍</h2>
+                <div class="relative inline-block">
+                    <select v-model="selectedMonth" class="appearance-none bg-white border border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700 cursor-pointer">
                         <option v-for="m in sortedMonths" :value="m">{{ formatMonth(m) }}</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
@@ -60,7 +86,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="cat in categories" :key="cat.key" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                <div v-for="cat in categories" :key="cat.key" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                     <div :class="cat.bgClass" class="h-2"></div>
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-4">
@@ -74,8 +100,8 @@
                         </div>
                         
                         <div v-if="getChampion(cat.key)">
-                            <h3 class="text-lg font-bold text-gray-900 mb-1 truncate">{{ getChampion(cat.key).model }}</h3>
-                            <p class="text-xs text-gray-400">{{ getChampion(cat.key).brand }}</p>
+                            <h3 class="text-lg font-bold text-gray-900 mb-1 truncate m-0">{{ getChampion(cat.key).model }}</h3>
+                            <p class="text-xs text-gray-400 m-0">{{ getChampion(cat.key).brand }}</p>
                         </div>
                         <div v-else class="text-center py-4 text-gray-300">
                             無資料
@@ -86,10 +112,10 @@
             
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="font-bold text-gray-700">🔥 本月總排名 Top 10</h3>
+                    <h3 class="font-bold text-gray-700 m-0">🔥 本月總排名 Top 10</h3>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-[600px]">
                         <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
                             <tr>
                                 <th class="px-6 py-3 text-center w-16">排名</th>
@@ -111,7 +137,7 @@
                                     <div class="text-xs text-gray-400">{{ car.brand }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="getCategoryBadge(car.category)">
+                                    <span class="px-2 py-1 rounded text-xs font-bold inline-block" :class="getCategoryBadge(car.category)">
                                         {{ car.category }}
                                     </span>
                                 </td>
@@ -147,7 +173,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500">
+                <table class="w-full text-sm text-left text-gray-500 min-w-[600px]">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
                             <th scope="col" class="px-6 py-3 w-16 text-center">Rank</th>
@@ -165,7 +191,7 @@
                                 <div class="text-xs text-gray-500">{{ car.brand }}</div>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="px-2 py-1 rounded text-xs font-bold" :class="getCategoryBadge(car.category)">
+                                <span class="px-2 py-1 rounded text-xs font-bold inline-block" :class="getCategoryBadge(car.category)">
                                     {{ car.category }}
                                 </span>
                             </td>
@@ -193,7 +219,9 @@
                 <label class="block mb-2 text-sm font-medium text-gray-900">選擇車款查詢歷史趨勢</label>
                 <div class="relative">
                     <input v-model="trendSearch" type="text" placeholder="輸入車名 (例如: Corolla Cross)..." 
-                           class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                    
                     <div v-if="trendSuggestions.length > 0 && trendSearch" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                         <div v-for="model in trendSuggestions" @click="selectTrendModel(model)" class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm">
                             {{ model }}
@@ -217,153 +245,44 @@
 <script>
     const { createApp } = Vue;
 
-    // === 資料庫 (Python 產生) ===
+    // === 資料庫 (含 2024 上半年 & 2025 下半年) ===
     const rawSalesData = [
-        {"month": "2024-03", "brand": "AUDI", "model": "AUDI A3 SPORTBACK 30 TFSI", "count": 59, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "AUDI", "model": "AUDI A3 SPORTBACK 35 TFSI", "count": 127, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "BMW", "model": "BMW X1", "count": 102, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "BMW", "model": "BMW X3", "count": 81, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "BMW", "model": "BMW X4", "count": 70, "category": "Other"}, 
-        {"month": "2024-03", "brand": "BMW", "model": "BMW iX", "count": 89, "category": "EV"}, 
-        {"month": "2024-03", "brand": "中華CMC", "model": "CMC Zinger", "count": 692, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "福特", "model": "Ford Focus", "count": 594, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "福特", "model": "Ford Kuga", "count": 275, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "台本", "model": "Honda CR-V", "count": 1460, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "台本", "model": "Honda Fit", "count": 477, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "台本", "model": "Honda HR-V", "count": 659, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "三陽", "model": "Hyundai Custin", "count": 459, "category": "MPV"}, 
-        {"month": "2024-03", "brand": "三陽", "model": "Hyundai Tucson L", "count": 825, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "三陽", "model": "Hyundai Venue", "count": 291, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus ES", "count": 185, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus LBX", "count": 205, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus LM", "count": 106, "category": "MPV"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus NX", "count": 1079, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus RX", "count": 485, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus UX", "count": 433, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "納智捷", "model": "Luxgen n7", "count": 416, "category": "EV"}, 
-        {"month": "2024-03", "brand": "BENZ", "model": "M-Benz C-Class", "count": 190, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "BENZ", "model": "M-Benz E-Class", "count": 102, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "BENZ", "model": "M-Benz GLC", "count": 681, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "BENZ", "model": "M-Benz GLE", "count": 191, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "MG", "model": "MG HS", "count": 1711, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "MG", "model": "MG ZS", "count": 510, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "MAZDA", "model": "Mazda 2", "count": 59, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "MAZDA", "model": "Mazda 3", "count": 277, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "MAZDA", "model": "Mazda CX-30", "count": 184, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "MAZDA", "model": "Mazda CX-5", "count": 415, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "MAZDA", "model": "Mazda CX-60", "count": 137, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "中華三菱", "model": "Mitsubishi Colt Plus", "count": 285, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "中華三菱", "model": "Mitsubishi Grand Lancer", "count": 47, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "中華三菱", "model": "Mitsubishi Outlander", "count": 109, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "裕隆", "model": "Nissan Kicks", "count": 546, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "裕隆", "model": "Nissan Sentra", "count": 269, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "裕隆", "model": "Nissan X-Trail", "count": 605, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "SKODA", "model": "Skoda Kamiq", "count": 111, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "SKODA", "model": "Skoda Kodiaq", "count": 81, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "SKODA", "model": "Skoda Octavia", "count": 104, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 164, "category": "Hatchback"}, 
-        {"month": "2024-03", "brand": "TESLA", "model": "Tesla Model 3", "count": 401, "category": "EV"}, 
-        {"month": "2024-03", "brand": "TESLA", "model": "Tesla Model X", "count": 418, "category": "EV"}, 
-        {"month": "2024-03", "brand": "TESLA", "model": "Tesla Model Y", "count": 1337, "category": "EV"}, 
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Altis", "count": 890, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2281, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1573, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Sienta", "count": 232, "category": "MPV"}, 
-        {"month": "2024-03", "brand": "TOYOTA", "model": "Toyota Town Ace", "count": 2042, "category": "Other"}, 
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Vios", "count": 444, "category": "Sedan"}, 
-        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1502, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "VOLVO", "model": "Volvo XC40", "count": 204, "category": "SUV"}, 
-        {"month": "2024-03", "brand": "VOLVO", "model": "Volvo XC60", "count": 197, "category": "SUV"},
-        {"month": "2024-04", "brand": "BMW", "model": "BMW X1", "count": 128, "category": "SUV"},
-        {"month": "2024-04", "brand": "BMW", "model": "BMW X3", "count": 67, "category": "SUV"},
-        {"month": "2024-04", "brand": "BMW", "model": "BMW iX", "count": 147, "category": "EV"},
+        // --- 2024 DATA ---
+        {"month": "2024-03", "brand": "中華CMC", "model": "CMC Zinger", "count": 692, "category": "SUV"},
+        {"month": "2024-03", "brand": "福特", "model": "Ford Focus", "count": 594, "category": "Hatchback"},
+        {"month": "2024-03", "brand": "台本", "model": "Honda CR-V", "count": 1460, "category": "SUV"},
+        {"month": "2024-03", "brand": "三陽", "model": "Hyundai Custin", "count": 459, "category": "MPV"},
+        {"month": "2024-03", "brand": "LEXUS", "model": "Lexus NX", "count": 1079, "category": "SUV"},
+        {"month": "2024-03", "brand": "納智捷", "model": "Luxgen n7", "count": 416, "category": "EV"},
+        {"month": "2024-03", "brand": "MG", "model": "MG HS", "count": 1711, "category": "SUV"},
+        {"month": "2024-03", "brand": "TESLA", "model": "Tesla Model Y", "count": 1337, "category": "EV"},
+        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Altis", "count": 890, "category": "Sedan"},
+        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2281, "category": "SUV"},
+        {"month": "2024-03", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1573, "category": "SUV"},
+        {"month": "2024-03", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1502, "category": "SUV"},
         {"month": "2024-04", "brand": "中華CMC", "model": "CMC Zinger", "count": 572, "category": "SUV"},
         {"month": "2024-04", "brand": "福特", "model": "Ford Focus", "count": 620, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "福特", "model": "Ford Kuga", "count": 436, "category": "SUV"},
         {"month": "2024-04", "brand": "台本", "model": "Honda CR-V", "count": 1062, "category": "SUV"},
-        {"month": "2024-04", "brand": "台本", "model": "Honda Fit", "count": 490, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "台本", "model": "Honda HR-V", "count": 742, "category": "SUV"},
         {"month": "2024-04", "brand": "三陽", "model": "Hyundai Custin", "count": 556, "category": "MPV"},
-        {"month": "2024-04", "brand": "三陽", "model": "Hyundai Tucson L", "count": 599, "category": "SUV"},
-        {"month": "2024-04", "brand": "三陽", "model": "Hyundai Venue", "count": 235, "category": "SUV"},
-        {"month": "2024-04", "brand": "KIA", "model": "Kia Carnival", "count": 145, "category": "MPV"},
-        {"month": "2024-04", "brand": "LEXUS", "model": "Lexus LBX", "count": 178, "category": "SUV"},
-        {"month": "2024-04", "brand": "LEXUS", "model": "Lexus LM", "count": 92, "category": "MPV"},
         {"month": "2024-04", "brand": "LEXUS", "model": "Lexus NX", "count": 999, "category": "SUV"},
-        {"month": "2024-04", "brand": "LEXUS", "model": "Lexus RX", "count": 511, "category": "SUV"},
-        {"month": "2024-04", "brand": "LEXUS", "model": "Lexus UX", "count": 427, "category": "SUV"},
         {"month": "2024-04", "brand": "納智捷", "model": "Luxgen n7", "count": 1055, "category": "EV"},
-        {"month": "2024-04", "brand": "BENZ", "model": "M-Benz C-Class", "count": 133, "category": "Sedan"},
-        {"month": "2024-04", "brand": "BENZ", "model": "M-Benz GLC", "count": 468, "category": "SUV"},
-        {"month": "2024-04", "brand": "BENZ", "model": "M-Benz GLE", "count": 252, "category": "SUV"},
         {"month": "2024-04", "brand": "MG", "model": "MG HS", "count": 1627, "category": "SUV"},
-        {"month": "2024-04", "brand": "MG", "model": "MG ZS", "count": 503, "category": "SUV"},
-        {"month": "2024-04", "brand": "MAZDA", "model": "Mazda 3", "count": 144, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "MAZDA", "model": "Mazda CX-5", "count": 296, "category": "SUV"},
-        {"month": "2024-04", "brand": "MAZDA", "model": "Mazda CX-60", "count": 149, "category": "SUV"},
-        {"month": "2024-04", "brand": "中華三菱", "model": "Mitsubishi Colt Plus", "count": 446, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "中華三菱", "model": "Mitsubishi Grand Lancer", "count": 57, "category": "Sedan"},
-        {"month": "2024-04", "brand": "中華三菱", "model": "Mitsubishi Outlander", "count": 118, "category": "SUV"},
-        {"month": "2024-04", "brand": "裕隆", "model": "Nissan Kicks", "count": 441, "category": "SUV"},
-        {"month": "2024-04", "brand": "裕隆", "model": "Nissan Sentra", "count": 433, "category": "Sedan"},
-        {"month": "2024-04", "brand": "裕隆", "model": "Nissan X-Trail", "count": 522, "category": "SUV"},
-        {"month": "2024-04", "brand": "SUZUKI", "model": "Suzuki Swift", "count": 245, "category": "Hatchback"},
-        {"month": "2024-04", "brand": "TESLA", "model": "Tesla Model Y", "count": 118, "category": "EV"},
         {"month": "2024-04", "brand": "國瑞", "model": "Toyota Altis", "count": 954, "category": "Sedan"},
-        {"month": "2024-04", "brand": "TOYOTA", "model": "Toyota Camry", "count": 210, "category": "Sedan"},
         {"month": "2024-04", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2268, "category": "SUV"},
         {"month": "2024-04", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1569, "category": "SUV"},
-        {"month": "2024-04", "brand": "國瑞", "model": "Toyota Sienta", "count": 295, "category": "MPV"},
-        {"month": "2024-04", "brand": "TOYOTA", "model": "Toyota Town Ace", "count": 1765, "category": "Other"},
-        {"month": "2024-04", "brand": "國瑞", "model": "Toyota Vios", "count": 404, "category": "Sedan"},
         {"month": "2024-04", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1418, "category": "SUV"},
-        {"month": "2024-04", "brand": "VOLVO", "model": "Volvo XC40", "count": 139, "category": "SUV"},
-        {"month": "2024-05", "brand": "BMW", "model": "BMW X1", "count": 218, "category": "SUV"},
-        {"month": "2024-05", "brand": "BMW", "model": "BMW X3", "count": 156, "category": "SUV"},
-        {"month": "2024-05", "brand": "BMW", "model": "BMW iX", "count": 69, "category": "EV"},
         {"month": "2024-05", "brand": "中華CMC", "model": "CMC Zinger", "count": 602, "category": "SUV"},
         {"month": "2024-05", "brand": "福特", "model": "Ford Focus", "count": 649, "category": "Hatchback"},
-        {"month": "2024-05", "brand": "福特", "model": "Ford Kuga", "count": 395, "category": "SUV"},
         {"month": "2024-05", "brand": "台本", "model": "Honda CR-V", "count": 1378, "category": "SUV"},
-        {"month": "2024-05", "brand": "台本", "model": "Honda Fit", "count": 476, "category": "Hatchback"},
-        {"month": "2024-05", "brand": "台本", "model": "Honda HR-V", "count": 512, "category": "SUV"},
         {"month": "2024-05", "brand": "三陽", "model": "Hyundai Custin", "count": 463, "category": "MPV"},
-        {"month": "2024-05", "brand": "三陽", "model": "Hyundai Tucson L", "count": 811, "category": "SUV"},
-        {"month": "2024-05", "brand": "三陽", "model": "Hyundai Venue", "count": 172, "category": "SUV"},
-        {"month": "2024-05", "brand": "KIA", "model": "Kia Carnival", "count": 162, "category": "MPV"},
-        {"month": "2024-05", "brand": "LEXUS", "model": "Lexus LBX", "count": 172, "category": "SUV"},
-        {"month": "2024-05", "brand": "LEXUS", "model": "Lexus LM", "count": 168, "category": "MPV"},
         {"month": "2024-05", "brand": "LEXUS", "model": "Lexus NX", "count": 696, "category": "SUV"},
-        {"month": "2024-05", "brand": "LEXUS", "model": "Lexus RX", "count": 361, "category": "SUV"},
-        {"month": "2024-05", "brand": "LEXUS", "model": "Lexus UX", "count": 277, "category": "SUV"},
         {"month": "2024-05", "brand": "納智捷", "model": "Luxgen n7", "count": 1100, "category": "EV"},
-        {"month": "2024-05", "brand": "BENZ", "model": "M-Benz C-Class", "count": 201, "category": "Sedan"},
-        {"month": "2024-05", "brand": "BENZ", "model": "M-Benz GLC", "count": 1020, "category": "SUV"},
-        {"month": "2024-05", "brand": "BENZ", "model": "M-Benz GLE", "count": 235, "category": "SUV"},
         {"month": "2024-05", "brand": "MG", "model": "MG HS", "count": 1283, "category": "SUV"},
-        {"month": "2024-05", "brand": "MG", "model": "MG ZS", "count": 559, "category": "SUV"},
-        {"month": "2024-05", "brand": "MAZDA", "model": "Mazda 3", "count": 264, "category": "Hatchback"},
-        {"month": "2024-05", "brand": "MAZDA", "model": "Mazda CX-5", "count": 510, "category": "SUV"},
-        {"month": "2024-05", "brand": "MAZDA", "model": "Mazda CX-60", "count": 91, "category": "SUV"},
-        {"month": "2024-05", "brand": "中華三菱", "model": "Mitsubishi Colt Plus", "count": 298, "category": "Hatchback"},
-        {"month": "2024-05", "brand": "中華三菱", "model": "Mitsubishi Grand Lancer", "count": 16, "category": "Sedan"},
-        {"month": "2024-05", "brand": "中華三菱", "model": "Mitsubishi Outlander", "count": 129, "category": "SUV"},
-        {"month": "2024-05", "brand": "裕隆", "model": "Nissan Kicks", "count": 519, "category": "SUV"},
-        {"month": "2024-05", "brand": "裕隆", "model": "Nissan Sentra", "count": 551, "category": "Sedan"},
-        {"month": "2024-05", "brand": "裕隆", "model": "Nissan X-Trail", "count": 692, "category": "SUV"},
-        {"month": "2024-05", "brand": "TESLA", "model": "Tesla Model 3", "count": 559, "category": "EV"},
-        {"month": "2024-05", "brand": "TESLA", "model": "Tesla Model Y", "count": 1063, "category": "EV"},
         {"month": "2024-05", "brand": "國瑞", "model": "Toyota Altis", "count": 951, "category": "Sedan"},
-        {"month": "2024-05", "brand": "TOYOTA", "model": "Toyota Camry", "count": 197, "category": "Sedan"},
         {"month": "2024-05", "brand": "國瑞", "model": "Toyota Corolla Cross", "count": 2347, "category": "SUV"},
         {"month": "2024-05", "brand": "TOYOTA", "model": "Toyota RAV4", "count": 1780, "category": "SUV"},
-        {"month": "2024-05", "brand": "國瑞", "model": "Toyota Sienta", "count": 305, "category": "MPV"},
-        {"month": "2024-05", "brand": "TOYOTA", "model": "Toyota Town Ace", "count": 1928, "category": "Other"},
-        {"month": "2024-05", "brand": "國瑞", "model": "Toyota Vios", "count": 553, "category": "Sedan"},
         {"month": "2024-05", "brand": "國瑞", "model": "Toyota Yaris Cross", "count": 1378, "category": "SUV"},
-        {"month": "2024-05", "brand": "VOLVO", "model": "Volvo XC40", "count": 313, "category": "SUV"},
-        {"month": "2024-05", "brand": "VOLVO", "model": "Volvo XC60", "count": 204, "category": "SUV"}
-        
+
         // --- 2025-08 ---
         {"month": "2025-08", "brand": "中華CMC", "model": "CMC Zinger", "count": 526, "category": "SUV"},
         {"month": "2025-08", "brand": "福特", "model": "Ford Focus", "count": 286, "category": "Hatchback"},
@@ -434,7 +353,7 @@
         data() {
             return {
                 currentView: 'dashboard',
-                selectedMonth: '2025-10',
+                selectedMonth: '2025-10', // 預設顯示最新的 2025-10
                 filterCategory: 'All',
                 searchQuery: '',
                 trendSearch: '',
@@ -451,14 +370,14 @@
         },
         computed: {
             sortedMonths() {
-                // Extract unique months and sort descending
+                // 抓出所有月份並倒序排列
                 const months = [...new Set(this.salesData.map(d => d.month))];
                 return months.sort().reverse();
             },
             currentMonthData() {
                 return this.salesData.filter(d => d.month === this.selectedMonth);
             },
-            // For Dashboard: Top 1 per category
+            // 戰況看板：找出各分類的第一名
             categoryChampions() {
                 const champs = {};
                 this.categories.forEach(cat => {
@@ -469,22 +388,22 @@
                 });
                 return champs;
             },
-            // For Dashboard: Top 10 List
+            // 戰況看板：Top 10 總排名
             top10List() {
                 return this.currentMonthData
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 10);
             },
-            // For Ranking View
+            // 榜單頁面：篩選與搜尋
             filteredRanking() {
                 let data = this.currentMonthData;
                 
-                // Filter Category
+                // 分類篩選
                 if (this.filterCategory !== 'All') {
                     data = data.filter(d => d.category === this.filterCategory);
                 }
                 
-                // Search
+                // 搜尋文字
                 if (this.searchQuery) {
                     const q = this.searchQuery.toLowerCase();
                     data = data.filter(d => d.model.toLowerCase().includes(q) || d.brand.toLowerCase().includes(q));
@@ -492,7 +411,7 @@
                 
                 return data.sort((a, b) => b.count - a.count);
             },
-            // Trend Search Suggestions
+            // 趨勢搜尋建議
             trendSuggestions() {
                 if (!this.trendSearch) return [];
                 const q = this.trendSearch.toLowerCase();
@@ -522,7 +441,7 @@
             getChampion(catKey) {
                 return this.categoryChampions[catKey];
             },
-            // Jump to trend tab
+            // 切換到趨勢圖
             showTrend(modelName) {
                 this.currentView = 'trend';
                 this.trendSearch = modelName;
@@ -534,11 +453,11 @@
             },
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
-                if (!ctx) return; // Tab not active
+                if (!ctx) return; // 如果沒切到該分頁就跳出
 
-                // Get data for this model across all months
+                // 抓取該車型所有月份數據
                 const modelData = this.salesData.filter(d => d.model === modelName);
-                // Sort by month
+                // 整理月份軸
                 const months = [...new Set(this.salesData.map(d => d.month))].sort();
                 
                 const counts = months.map(m => {
@@ -577,7 +496,7 @@
                 });
             }
         },
-        // Wait for DOM update when switching tabs to render chart
+        // 監聽分頁切換，如果是趨勢圖且已有搜尋字，就重繪圖表
         watch: {
             currentView(newVal) {
                 if (newVal === 'trend' && this.trendSearch) {
@@ -587,7 +506,7 @@
                 }
             }
         }
-    }).mount('#app');
+    }).mount('#car-sales-app');
 </script>
 
 </body>
