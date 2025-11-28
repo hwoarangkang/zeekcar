@@ -28,7 +28,6 @@
         #car-sales-app input, #car-sales-app select { border-style: solid; }
         #car-sales-app table { width: 100%; border-collapse: collapse; }
         .rank-badge { width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; color: white; }
-        /* 增加按鈕互動感 */
         .hover-lift:hover { transform: translateY(-2px); transition: transform 0.2s; }
     </style>
 </head>
@@ -81,9 +80,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div v-for="battle in battlefields" :key="battle.title" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col hover-lift">
-                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center cursor-pointer" 
-                             :class="battle.bgLight"
-                             @click="jumpToRanking(battle.filterKey)">
+                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center cursor-pointer" :class="battle.bgLight" @click="jumpToRanking(battle.filterKey)">
                             <div class="flex items-center gap-2">
                                 <i :class="[battle.icon, battle.textClass]"></i>
                                 <h3 class="font-bold text-gray-800 m-0">{{ battle.title }}</h3>
@@ -92,7 +89,6 @@
                                 完整榜單 &raquo;
                             </button>
                         </div>
-
                         <div class="p-5 flex-1 flex flex-col justify-between cursor-pointer" @click="jumpToRanking(battle.filterKey)">
                             <div v-if="battle.data.length > 0" class="mb-4">
                                 <div class="flex justify-between items-end mb-1">
@@ -287,8 +283,6 @@
             },
             filteredRanking() {
                 let data = this.currentMonthData;
-                
-                // === 這裡處理複雜的分類邏輯 ===
                 if (this.filterCategory === 'Domestic_SUV') {
                     data = data.filter(d => d.source === 'Domestic' && d.category === 'SUV');
                 } else if (this.filterCategory === 'Import_SUV') {
@@ -321,11 +315,12 @@
         },
         watch: {
             selectedMonth() { this.updateBattlefields(); },
+            // 監聽 View 切換：如果切換到趨勢頁且已有選車，延遲 400ms 畫圖，避開動畫
             currentView(newVal) {
                 if (newVal === 'trend' && this.trendSearch && this.hasSelectedCar) {
                     setTimeout(() => {
                         this.renderChart(this.trendSearch);
-                    }, 300);
+                    }, 400); 
                 }
             }
         },
@@ -413,33 +408,40 @@
                 this.filterCategory = filterKey;
                 this.currentView = 'ranking';
             },
+            // 分流邏輯：榜單點過來 (換頁) vs 趨勢頁搜尋 (不換頁)
             showTrend(modelName) {
-                this.currentView = 'trend';
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
                 this.showDropdown = false;
-                setTimeout(() => {
-                    this.renderChart(modelName);
-                }, 300);
+                
+                // 1. 如果已經在趨勢頁，直接畫圖 (不需等待)
+                if (this.currentView === 'trend') {
+                    this.$nextTick(() => {
+                        this.renderChart(modelName);
+                    });
+                } 
+                // 2. 如果從其他頁過來，設定 view 觸發 watcher (需要等待動畫)
+                else {
+                    this.currentView = 'trend';
+                }
             },
             selectTrendModel(modelName) {
-                this.trendSearch = modelName;
-                this.hasSelectedCar = true;
-                this.showDropdown = false;
-                setTimeout(() => {
-                    this.renderChart(modelName);
-                }, 300);
+                this.showTrend(modelName); // 共用邏輯
             },
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
+                // 雙重保險：如果畫布還沒出來，就放棄這次繪圖 (避免報錯)
                 if (!ctx) return;
+                
                 const modelData = this.salesData.filter(d => d.model === modelName);
                 const months = [...new Set(this.salesData.map(d => d.month))].sort();
                 const counts = months.map(m => {
                     const record = modelData.find(d => d.month === m);
                     return record ? record.count : 0;
                 });
+                
                 if (this.chartInstance) this.chartInstance.destroy();
+                
                 this.chartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
