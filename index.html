@@ -162,7 +162,9 @@
                             <option value="Luxury">💎 豪華品牌排行</option>
                             <option value="EV">⚡ 電動車排行</option>
                             <hr>
-                            <option value="MPV">🚐 MPV 廂式休旅</option>
+                            <option value="7Seater">🚐 七人座/MPV排行</option>
+                            <option value="Commercial">🚛 商用車排行</option>
+                            <option value="Hybrid">🔋 油電混合排行</option>
                         </select>
                     </div>
                     <div class="relative w-full md:w-64">
@@ -283,6 +285,8 @@
             },
             filteredRanking() {
                 let data = this.currentMonthData;
+                
+                // === 篩選邏輯 ===
                 if (this.filterCategory === 'Domestic_SUV') {
                     data = data.filter(d => d.source === 'Domestic' && d.category === 'SUV');
                 } else if (this.filterCategory === 'Import_SUV') {
@@ -295,6 +299,12 @@
                     data = data.filter(d => this.isLuxury(d.brand));
                 } else if (this.filterCategory === 'EV') {
                     data = data.filter(d => d.category === 'EV');
+                } else if (this.filterCategory === '7Seater') {
+                    data = data.filter(d => this.isSevenSeater(d.model) || d.category === 'MPV');
+                } else if (this.filterCategory === 'Commercial') {
+                    data = data.filter(d => this.isCommercial(d.model) || d.category === 'Other');
+                } else if (this.filterCategory === 'Hybrid') {
+                    data = data.filter(d => this.isHybridAvailable(d.brand, d.model));
                 } else if (this.filterCategory !== 'All') {
                     data = data.filter(d => d.category === this.filterCategory);
                 }
@@ -315,7 +325,6 @@
         },
         watch: {
             selectedMonth() { this.updateBattlefields(); },
-            // 監聽 View 切換：如果切換到趨勢頁且已有選車，延遲 400ms 畫圖，避開動畫
             currentView(newVal) {
                 if (newVal === 'trend' && this.trendSearch && this.hasSelectedCar) {
                     setTimeout(() => {
@@ -352,8 +361,26 @@
                 return 'Import';
             },
             isLuxury(brand) {
-                const luxury = ['Lexus', 'BENZ', 'M-Benz', 'BMW', 'Volvo', 'Tesla', 'Audi', 'Porsche', 'LEXUS'];
+                const luxury = ['Lexus', 'BENZ', 'M-Benz', 'BMW', 'Volvo', 'Tesla', 'Audi', 'Porsche', 'LEXUS', 'Land Rover', 'Jaguar'];
                 return luxury.some(b => brand.includes(b));
+            },
+            // === 新增：判斷七人座 ===
+            isSevenSeater(model) {
+                const list = ['Custin', 'Carnival', 'Alphard', 'Sienna', 'LM', 'Kodiaq', 'Sorento', 'CX-9', 'CX-90', 'Santa Fe', '5008', 'Discovery', 'Defender 130', 'X7', 'GLS', 'Q7', 'Granvia', 'Odyssey', 'Sienta', 'Berlingo', 'Caddy'];
+                return list.some(k => model.includes(k));
+            },
+            // === 新增：判斷商用車 ===
+            isCommercial(model) {
+                const list = ['Town Ace', 'Veryca', 'Delica', 'Zinger Pick up', 'Porter', 'J Space', 'Granvia', 'Hiace'];
+                return list.some(k => model.includes(k));
+            },
+            // === 新增：判斷油電車 (含油電選配車款) ===
+            isHybridAvailable(brand, model) {
+                // Toyota/Lexus 幾乎全系都有，Honda e:HEV, Nissan e-Power
+                const hybrids = ['Corolla Cross', 'RAV4', 'Altis', 'Camry', 'Prius', 'Crown', 'Sienna', 'Alphard', 'LM', 'NX', 'RX', 'UX', 'LBX', 'ES', 'IS', 'LS', 'Fit', 'Civic', 'X-Trail', 'Kicks', 'HS', 'Ignis', 'Swift', 'Vitara'];
+                // Lexus 全品牌算油電 (除了極少數純油)
+                if (brand.includes('Lexus') || brand.includes('LEXUS')) return true;
+                return hybrids.some(k => model.includes(k));
             },
             updateBattlefields() {
                 const data = this.currentMonthData;
@@ -361,45 +388,36 @@
 
                 this.battlefields = [
                     { 
-                        title: '國產休旅 Top 3', 
-                        filterKey: 'Domestic_SUV',
-                        icon: 'fas fa-truck-monster', 
-                        textClass: 'text-orange-600', bgLight: 'bg-orange-50',
+                        title: '國產休旅 Top 3', filterKey: 'Domestic_SUV', icon: 'fas fa-truck-monster', textClass: 'text-orange-600', bgLight: 'bg-orange-50',
                         data: getTop3(d => d.source === 'Domestic' && d.category === 'SUV')
                     },
                     { 
-                        title: '進口休旅 Top 3', 
-                        filterKey: 'Import_SUV',
-                        icon: 'fas fa-plane-arrival', 
-                        textClass: 'text-blue-600', bgLight: 'bg-blue-50',
+                        title: '進口休旅 Top 3', filterKey: 'Import_SUV', icon: 'fas fa-plane-arrival', textClass: 'text-blue-600', bgLight: 'bg-blue-50',
                         data: getTop3(d => d.source === 'Import' && d.category === 'SUV' && !this.isLuxury(d.brand))
                     },
                     { 
-                        title: '國產轎車/掀背 Top 3', 
-                        filterKey: 'Domestic_Car',
-                        icon: 'fas fa-car-side', 
-                        textClass: 'text-green-600', bgLight: 'bg-green-50',
+                        title: '國產轎車/掀背 Top 3', filterKey: 'Domestic_Car', icon: 'fas fa-car-side', textClass: 'text-green-600', bgLight: 'bg-green-50',
                         data: getTop3(d => d.source === 'Domestic' && (d.category === 'Sedan' || d.category === 'Hatchback'))
                     },
+                    // 新增 3 個戰區
                     { 
-                        title: '進口轎車/掀背 Top 3', 
-                        filterKey: 'Import_Car',
-                        icon: 'fas fa-car', 
-                        textClass: 'text-teal-600', bgLight: 'bg-teal-50',
-                        data: getTop3(d => d.source === 'Import' && (d.category === 'Sedan' || d.category === 'Hatchback') && !this.isLuxury(d.brand))
+                        title: '七人座/MPV Top 3', filterKey: '7Seater', icon: 'fas fa-users', textClass: 'text-indigo-600', bgLight: 'bg-indigo-50',
+                        data: getTop3(d => this.isSevenSeater(d.model) || d.category === 'MPV')
                     },
                     { 
-                        title: '豪華品牌 Top 3', 
-                        filterKey: 'Luxury',
-                        icon: 'fas fa-gem', 
-                        textClass: 'text-purple-600', bgLight: 'bg-purple-50',
+                        title: '商用車 Top 3', filterKey: 'Commercial', icon: 'fas fa-truck-loading', textClass: 'text-gray-600', bgLight: 'bg-gray-100',
+                        data: getTop3(d => this.isCommercial(d.model) || d.category === 'Other')
+                    },
+                    { 
+                        title: '油電混合 Top 3', filterKey: 'Hybrid', icon: 'fas fa-leaf', textClass: 'text-emerald-600', bgLight: 'bg-emerald-50',
+                        data: getTop3(d => this.isHybridAvailable(d.brand, d.model))
+                    },
+                    { 
+                        title: '豪華品牌 Top 3', filterKey: 'Luxury', icon: 'fas fa-gem', textClass: 'text-purple-600', bgLight: 'bg-purple-50',
                         data: getTop3(d => this.isLuxury(d.brand))
                     },
                     { 
-                        title: '電動車 Top 3', 
-                        filterKey: 'EV',
-                        icon: 'fas fa-bolt', 
-                        textClass: 'text-yellow-600', bgLight: 'bg-yellow-50',
+                        title: '電動車 Top 3', filterKey: 'EV', icon: 'fas fa-bolt', textClass: 'text-yellow-600', bgLight: 'bg-yellow-50',
                         data: getTop3(d => d.category === 'EV')
                     }
                 ];
@@ -408,40 +426,30 @@
                 this.filterCategory = filterKey;
                 this.currentView = 'ranking';
             },
-            // 分流邏輯：榜單點過來 (換頁) vs 趨勢頁搜尋 (不換頁)
             showTrend(modelName) {
                 this.trendSearch = modelName;
                 this.hasSelectedCar = true;
                 this.showDropdown = false;
-                
-                // 1. 如果已經在趨勢頁，直接畫圖 (不需等待)
-                if (this.currentView === 'trend') {
-                    this.$nextTick(() => {
-                        this.renderChart(modelName);
-                    });
-                } 
-                // 2. 如果從其他頁過來，設定 view 觸發 watcher (需要等待動畫)
-                else {
-                    this.currentView = 'trend';
-                }
+                this.currentView = 'trend';
             },
             selectTrendModel(modelName) {
-                this.showTrend(modelName); // 共用邏輯
+                this.trendSearch = modelName;
+                this.hasSelectedCar = true;
+                this.showDropdown = false;
+                setTimeout(() => {
+                    this.renderChart(modelName);
+                }, 300);
             },
             renderChart(modelName) {
                 const ctx = document.getElementById('salesChart');
-                // 雙重保險：如果畫布還沒出來，就放棄這次繪圖 (避免報錯)
                 if (!ctx) return;
-                
                 const modelData = this.salesData.filter(d => d.model === modelName);
                 const months = [...new Set(this.salesData.map(d => d.month))].sort();
                 const counts = months.map(m => {
                     const record = modelData.find(d => d.month === m);
                     return record ? record.count : 0;
                 });
-                
                 if (this.chartInstance) this.chartInstance.destroy();
-                
                 this.chartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
