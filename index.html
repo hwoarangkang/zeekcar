@@ -285,8 +285,6 @@
             },
             filteredRanking() {
                 let data = this.currentMonthData;
-                
-                // === 篩選邏輯 ===
                 if (this.filterCategory === 'Domestic_SUV') {
                     data = data.filter(d => d.source === 'Domestic' && d.category === 'SUV');
                 } else if (this.filterCategory === 'Import_SUV') {
@@ -364,21 +362,16 @@
                 const luxury = ['Lexus', 'BENZ', 'M-Benz', 'BMW', 'Volvo', 'Tesla', 'Audi', 'Porsche', 'LEXUS', 'Land Rover', 'Jaguar'];
                 return luxury.some(b => brand.includes(b));
             },
-            // === 新增：判斷七人座 ===
             isSevenSeater(model) {
                 const list = ['Custin', 'Carnival', 'Alphard', 'Sienna', 'LM', 'Kodiaq', 'Sorento', 'CX-9', 'CX-90', 'Santa Fe', '5008', 'Discovery', 'Defender 130', 'X7', 'GLS', 'Q7', 'Granvia', 'Odyssey', 'Sienta', 'Berlingo', 'Caddy'];
                 return list.some(k => model.includes(k));
             },
-            // === 新增：判斷商用車 ===
             isCommercial(model) {
                 const list = ['Town Ace', 'Veryca', 'Delica', 'Zinger Pick up', 'Porter', 'J Space', 'Granvia', 'Hiace'];
                 return list.some(k => model.includes(k));
             },
-            // === 新增：判斷油電車 (含油電選配車款) ===
             isHybridAvailable(brand, model) {
-                // Toyota/Lexus 幾乎全系都有，Honda e:HEV, Nissan e-Power
                 const hybrids = ['Corolla Cross', 'RAV4', 'Altis', 'Camry', 'Prius', 'Crown', 'Sienna', 'Alphard', 'LM', 'NX', 'RX', 'UX', 'LBX', 'ES', 'IS', 'LS', 'Fit', 'Civic', 'X-Trail', 'Kicks', 'HS', 'Ignis', 'Swift', 'Vitara'];
-                // Lexus 全品牌算油電 (除了極少數純油)
                 if (brand.includes('Lexus') || brand.includes('LEXUS')) return true;
                 return hybrids.some(k => model.includes(k));
             },
@@ -399,7 +392,18 @@
                         title: '國產轎車/掀背 Top 3', filterKey: 'Domestic_Car', icon: 'fas fa-car-side', textClass: 'text-green-600', bgLight: 'bg-green-50',
                         data: getTop3(d => d.source === 'Domestic' && (d.category === 'Sedan' || d.category === 'Hatchback'))
                     },
-                    // 新增 3 個戰區
+                    { 
+                        title: '進口轎車/掀背 Top 3', filterKey: 'Import_Car', icon: 'fas fa-car', textClass: 'text-teal-600', bgLight: 'bg-teal-50',
+                        data: getTop3(d => d.source === 'Import' && (d.category === 'Sedan' || d.category === 'Hatchback') && !this.isLuxury(d.brand))
+                    },
+                    { 
+                        title: '豪華品牌 Top 3', filterKey: 'Luxury', icon: 'fas fa-gem', textClass: 'text-purple-600', bgLight: 'bg-purple-50',
+                        data: getTop3(d => this.isLuxury(d.brand))
+                    },
+                    { 
+                        title: '電動車 Top 3', filterKey: 'EV', icon: 'fas fa-bolt', textClass: 'text-yellow-600', bgLight: 'bg-yellow-50',
+                        data: getTop3(d => d.category === 'EV')
+                    },
                     { 
                         title: '七人座/MPV Top 3', filterKey: '7Seater', icon: 'fas fa-users', textClass: 'text-indigo-600', bgLight: 'bg-indigo-50',
                         data: getTop3(d => this.isSevenSeater(d.model) || d.category === 'MPV')
@@ -411,14 +415,6 @@
                     { 
                         title: '油電混合 Top 3', filterKey: 'Hybrid', icon: 'fas fa-leaf', textClass: 'text-emerald-600', bgLight: 'bg-emerald-50',
                         data: getTop3(d => this.isHybridAvailable(d.brand, d.model))
-                    },
-                    { 
-                        title: '豪華品牌 Top 3', filterKey: 'Luxury', icon: 'fas fa-gem', textClass: 'text-purple-600', bgLight: 'bg-purple-50',
-                        data: getTop3(d => this.isLuxury(d.brand))
-                    },
-                    { 
-                        title: '電動車 Top 3', filterKey: 'EV', icon: 'fas fa-bolt', textClass: 'text-yellow-600', bgLight: 'bg-yellow-50',
-                        data: getTop3(d => d.category === 'EV')
                     }
                 ];
             },
